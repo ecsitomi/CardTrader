@@ -1,6 +1,3 @@
 streamlit>=1.28.0
-sqlite3
-hashlib
-datetime
-re
-pathlib
+# bcrypt>=4.0.0  # Opcionális: biztonságos jelszó kezeléshez
+# pillow>=9.0.0  # Opcionális: képkezeléshez

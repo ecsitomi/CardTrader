@@ -1,10 +1,10 @@
 import streamlit as st
 import sys
 import os
+from pathlib import Path
 
-# Add parent directory to path for imports
-parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(parent_dir)
+# Clean import setup
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from auth import require_login
 from database import (
