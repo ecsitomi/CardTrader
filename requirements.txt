@@ -1,0 +1,6 @@
+streamlit>=1.28.0
+sqlite3
+hashlib
+datetime
+re
+pathlib
