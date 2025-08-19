@@ -581,30 +581,33 @@ def find_potential_matches(user_id, limit=50):
                 
                 (
                     (5 - COALESCE(uwp.priority, 3)) * 10 +
-                    cv.rarity_level * 5 +
-                    CASE 
-                        WHEN COALESCE(cs.supply_count, 0) = 0 THEN 30
-                        WHEN COALESCE(cs.supply_count, 0) = 1 THEN 25
-                        WHEN COALESCE(cs.supply_count, 0) = 2 THEN 20
-                        WHEN COALESCE(cs.supply_count, 0) <= 5 THEN 15
-                        ELSE GREATEST(0, 10 - cs.supply_count)
-                    END +
-                    LEAST(COALESCE(cd.demand_count, 0) * 3, 20) +
-                    CASE 
-                        WHEN uc.status = 'trade' THEN 15
-                        WHEN uc.status = 'sell' AND uwp.max_price IS NULL THEN 10
-                        WHEN uc.status = 'sell' AND uc.price <= uwp.max_price THEN 15
-                        WHEN uc.status = 'sell' AND uc.price <= uwp.max_price * 1.1 THEN 10
-                        WHEN uc.status = 'sell' AND uc.price <= uwp.max_price * 1.2 THEN 5
-                        ELSE 0
-                    END +
-                    CASE 
-                        WHEN uc.added_at >= datetime('now', '-1 day') THEN 10
-                        WHEN uc.added_at >= datetime('now', '-3 days') THEN 7
-                        WHEN uc.added_at >= datetime('now', '-7 days') THEN 5
-                        WHEN uc.added_at >= datetime('now', '-30 days') THEN 2
-                        ELSE 0
-                    END
+                        cv.rarity_level * 5 +
+                        CASE 
+                            WHEN COALESCE(cs.supply_count, 0) = 0 THEN 30
+                            WHEN COALESCE(cs.supply_count, 0) = 1 THEN 25
+                            WHEN COALESCE(cs.supply_count, 0) = 2 THEN 20
+                            WHEN COALESCE(cs.supply_count, 0) <= 5 THEN 15
+                            ELSE CASE WHEN (10 - cs.supply_count) > 0 THEN (10 - cs.supply_count) ELSE 0 END
+                        END +
+                        CASE 
+                            WHEN COALESCE(cd.demand_count, 0) * 3 < 20 THEN COALESCE(cd.demand_count, 0) * 3 
+                            ELSE 20 
+                        END +
+                        CASE 
+                            WHEN uc.status = 'trade' THEN 15
+                            WHEN uc.status = 'sell' AND uwp.max_price IS NULL THEN 10
+                            WHEN uc.status = 'sell' AND uc.price <= uwp.max_price THEN 15
+                            WHEN uc.status = 'sell' AND uc.price <= uwp.max_price * 1.1 THEN 10
+                            WHEN uc.status = 'sell' AND uc.price <= uwp.max_price * 1.2 THEN 5
+                            ELSE 0
+                        END +
+                        CASE 
+                            WHEN uc.added_at >= datetime('now', '-1 day') THEN 10
+                            WHEN uc.added_at >= datetime('now', '-3 days') THEN 7
+                            WHEN uc.added_at >= datetime('now', '-7 days') THEN 5
+                            WHEN uc.added_at >= datetime('now', '-30 days') THEN 2
+                            ELSE 0
+                        END
                 ) as match_score
                 
             FROM user_cards uc
