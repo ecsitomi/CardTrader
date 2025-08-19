@@ -16,7 +16,7 @@ from database import (
 
 from utils import (
     get_match_summary, format_match_score, get_market_trend_emoji,
-    format_wishlist_priority_badge, format_price, get_rarity_text,
+    format_wishlist_priority_badge, format_price, #get_rarity_text,
     format_days_ago, get_price_recommendation
 )
 
