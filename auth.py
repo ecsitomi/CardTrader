@@ -1,6 +1,13 @@
 import streamlit as st
 import re
-from database import create_user, authenticate_user
+import time
+
+# Importok megfelelő hibakezeléssel
+try:
+    from database import create_user, authenticate_user
+except ImportError as e:
+    st.error(f"Database import hiba: {e}")
+    st.stop()
 
 def is_valid_email(email):
     """Email cím validálása"""
@@ -41,22 +48,26 @@ def login_page():
                 return
             
             # Hitelesítés
-            success, user_data = authenticate_user(username, password)
-            
-            if success:
-                # Session state beállítása
-                st.session_state.logged_in = True
-                st.session_state.user_id = user_data['id']
-                st.session_state.username = user_data['username']
-                st.session_state.email = user_data['email']
+            try:
+                success, user_data = authenticate_user(username, password)
                 
-                st.success(f"✅ Sikeres bejelentkezés! Üdvözöl {username}!")
-                st.rerun()
-            else:
-                st.error("❌ Hibás felhasználónév vagy jelszó!")
+                if success:
+                    # Session state beállítása
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = user_data['id']
+                    st.session_state.username = user_data['username']
+                    st.session_state.email = user_data['email']
+                    
+                    st.success(f"✅ Sikeres bejelentkezés! Üdvözöl {username}!")
+                    time.sleep(1)  # Kis várakozás
+                    st.rerun()
+                else:
+                    st.error("❌ Hibás felhasználónév vagy jelszó!")
+            except Exception as e:
+                st.error(f"❌ Hiba történt a bejelentkezés során: {str(e)}")
 
 def register_page():
-    """Regisztrációs oldal"""
+    """Regisztrációs oldal - JAVÍTOTT"""
     st.subheader("📝 Regisztráció")
     
     with st.form("register_form"):
@@ -105,37 +116,53 @@ def register_page():
                 return
             
             # Regisztráció
-            success, message = create_user(username, email, password)
-            
-            if success:
-                st.success(f"✅ {message}")
-                st.info("🎉 Most már bejelentkezhetsz!")
+            try:
+                success, message = create_user(username, email, password)
                 
-                # Automatikus bejelentkezés
-                auth_success, user_data = authenticate_user(username, password)
-                if auth_success:
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = user_data['id']
-                    st.session_state.username = user_data['username']
-                    st.session_state.email = user_data['email']
-                    st.rerun()
-            else:
-                st.error(f"❌ {message}")
+                if success:
+                    st.success(f"✅ {message}")
+                    st.info("🎉 Most már bejelentkezhetsz!")
+                    
+                    # Kis várakozás a regisztráció után
+                    time.sleep(2)
+                    
+                    # Automatikus bejelentkezés - KÜLÖN try-catch blokkban
+                    try:
+                        auth_success, user_data = authenticate_user(username, password)
+                        if auth_success:
+                            st.session_state.logged_in = True
+                            st.session_state.user_id = user_data['id']
+                            st.session_state.username = user_data['username']
+                            st.session_state.email = user_data['email']
+                            
+                            # Újabb várakozás
+                            time.sleep(1)
+                            st.rerun()
+                    except Exception as e:
+                        # Ha az automatikus bejelentkezés sikertelen, nem gond
+                        st.info("👉 Kérlek jelentkezz be manuálisan!")
+                        
+                else:
+                    st.error(f"❌ {message}")
+                    
+            except Exception as e:
+                st.error(f"❌ Hiba történt a regisztráció során: {str(e)}")
+                st.info("💡 Próbáld újra néhány másodperc múlva!")
 
 def logout_user():
     """Felhasználó kijelentkeztetése"""
+    # Session state törlése
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    
+    # Alapértelmezett értékek visszaállítása
     st.session_state.logged_in = False
     st.session_state.user_id = None
     st.session_state.username = None
     st.session_state.email = None
-    
-    # Töröljük az összes session state-et
-    for key in list(st.session_state.keys()):
-        if key not in ['logged_in', 'user_id', 'username', 'email']:
-            del st.session_state[key]
 
 def require_login():
-    """Bejelentkezés ellenőrzése (decorator-szerű funkció)"""
+    """Bejelentkezés ellenőrzése"""
     if not st.session_state.get('logged_in', False):
         st.warning("⚠️ Ehhez a funkcióhoz be kell jelentkezned!")
         st.stop()
@@ -146,13 +173,12 @@ def get_current_user():
     """Aktuális felhasználó adatainak lekérése"""
     if st.session_state.get('logged_in', False):
         return {
-            'id': st.session_state.user_id,
-            'username': st.session_state.username,
-            'email': st.session_state.email
+            'id': st.session_state.get('user_id'),
+            'username': st.session_state.get('username'),
+            'email': st.session_state.get('email')
         }
     return None
 
-# Hasznos wrapper függvény az oldalakhoz
 def with_auth(page_function):
     """Wrapper függvény, ami ellenőrzi a bejelentkezést"""
     def wrapper(*args, **kwargs):
@@ -160,7 +186,6 @@ def with_auth(page_function):
             return page_function(*args, **kwargs)
     return wrapper
 
-# Felhasználási feltételek (egyszerű verzió)
 def show_terms_modal():
     """Felhasználási feltételek modal"""
     if st.button("📋 Felhasználási feltételek"):
@@ -188,6 +213,11 @@ def show_terms_modal():
             - Spam és kéretlen üzenetek tiltva
             - Hamis információk megadása tiltva
             
+            ### 5. Technikai információk
+            - Az adatbázis SQLite alapú
+            - WAL (Write-Ahead Logging) mód aktív
+            - Timeout: 30 másodperc
+            
             Frissítve: 2024. augusztus
             """)
             
@@ -195,3 +225,15 @@ def show_terms_modal():
                 st.success("Feltételek elfogadva!")
                 return True
     return False
+
+# Session state inicializálás helper
+def init_session_state():
+    """Session state alapértékek beállítása"""
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'user_id' not in st.session_state:
+        st.session_state.user_id = None
+    if 'username' not in st.session_state:
+        st.session_state.username = None
+    if 'email' not in st.session_state:
+        st.session_state.email = None
