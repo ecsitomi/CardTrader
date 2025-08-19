@@ -109,19 +109,19 @@ def show_dashboard():
         
         with col_a:
             if st.button("🃏 Kártya hozzáadása", use_container_width=True):
-                st.switch_page("pages/02_🃏_Kártyáim.py")
+                st.switch_page("pages/kartyaim.py")
                 
         with col_b:
             if st.button("🎯 Matchmaking", use_container_width=True):
-                st.switch_page("pages/07_🎯_Matchmaking.py")
+                st.switch_page("pages/matchmaking.py")
                 
         with col_c:
-            if st.button("🔍 Kártya keresése", use_container_width=True):
-                st.switch_page("pages/03_🔍_Keresés.py")
+            if st.button("📨 Üzenetek", use_container_width=True):
+                st.switch_page("pages/uzenetek.py")
                 
         with col_d:
-            if st.button("📨 Üzenetek", use_container_width=True):
-                st.switch_page("pages/05_📨_Üzenetek.py")
+            if st.button("🔍 Kártya keresése", use_container_width=True):
+                st.switch_page("pages/03_🔍_Keresés.py")
     
     with col2:
         st.header("🔥 Ajánlott")
