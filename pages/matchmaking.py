@@ -8,9 +8,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from auth import require_login
 from database import (
-    find_potential_matches, find_reverse_matches, get_market_insights,
-    get_all_variants, get_all_series
+    find_potential_matches,
+    #get_market_insights,
+    get_all_variants,
+    get_all_series
 )
+
 from utils import (
     get_match_summary, format_match_score, get_market_trend_emoji,
     format_wishlist_priority_badge, format_price, get_rarity_text,
